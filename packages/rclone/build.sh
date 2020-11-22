@@ -1,9 +1,9 @@
 TERMUX_PKG_HOMEPAGE=https://rclone.org/
 TERMUX_PKG_DESCRIPTION="rsync for cloud storage"
 TERMUX_PKG_LICENSE="MIT"
-TERMUX_PKG_VERSION=1.50.1
+TERMUX_PKG_VERSION=1.53.3
 TERMUX_PKG_SRCURL=https://github.com/rclone/rclone/releases/download/v${TERMUX_PKG_VERSION}/rclone-v${TERMUX_PKG_VERSION}.tar.gz
-TERMUX_PKG_SHA256=48d6c80883427469682b4d97099d7631cf3b67aa85e652c254423bd1422ce216
+TERMUX_PKG_SHA256=f1e213bc6fb7c46f9a4cc8604ae0856718434bdafe07fa3ce449ae9a510a5763
 
 termux_step_make_install() {
 	cd $TERMUX_PKG_SRCDIR
@@ -14,9 +14,6 @@ termux_step_make_install() {
 	ln -sf "$PWD" .gopath/src/github.com/rclone/rclone
 	export GOPATH="$PWD/.gopath"
 
-	# google.golang.org/grpc/internal/syscall does not build with GO111MODULE=on
-	# Remove when possible
-	export GO111MODULE=off
 	go build -v -o rclone
 
 	# XXX: Fix read-only files which prevents removal of src dir.

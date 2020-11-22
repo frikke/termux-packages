@@ -1,15 +1,16 @@
 TERMUX_PKG_HOMEPAGE=https://python.org/
 TERMUX_PKG_DESCRIPTION="Python 3 programming language intended to enable clear programs"
 TERMUX_PKG_LICENSE="PythonPL"
-_MAJOR_VERSION=3.8
+_MAJOR_VERSION=3.9
 TERMUX_PKG_VERSION=${_MAJOR_VERSION}.0
-TERMUX_PKG_REVISION=3
 TERMUX_PKG_SRCURL=https://www.python.org/ftp/python/${TERMUX_PKG_VERSION}/Python-${TERMUX_PKG_VERSION}.tar.xz
-TERMUX_PKG_SHA256=b356244e13fb5491da890b35b13b2118c3122977c2cd825e3eb6e7d462030d84
+TERMUX_PKG_SHA256=9c73e63c99855709b9be0b3cc9e5b072cb60f37311e8c4e50f15576a0bf82854
 TERMUX_PKG_DEPENDS="gdbm, libandroid-support, libbz2, libcrypt, libffi, liblzma, libsqlite, ncurses, ncurses-ui-libs, openssl, readline, zlib"
+TERMUX_PKG_RECOMMENDS="clang, make, pkg-config"
 TERMUX_PKG_SUGGESTS="python-tkinter"
+TERMUX_PKG_BREAKS="python2 (<= 2.7.15), python-dev"
+TERMUX_PKG_REPLACES="python-dev"
 
-# The flag --with(out)-pymalloc (disable/enable specialized mallocs) is enabled by default and causes m suffix versions of python.
 # Set ac_cv_func_wcsftime=no to avoid errors such as "character U+ca0025 is not in range [U+0000; U+10ffff]"
 # when executing e.g. "from time import time, strftime, localtime; print(strftime(str('%Y-%m-%d %H:%M'), localtime()))"
 TERMUX_PKG_EXTRA_CONFIGURE_ARGS="ac_cv_file__dev_ptmx=yes ac_cv_file__dev_ptc=no ac_cv_func_wcsftime=no"
@@ -29,15 +30,22 @@ TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" ac_cv_buggy_getaddrinfo=no"
 TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" --enable-loadable-sqlite-extensions"
 # Fix https://github.com/termux/termux-packages/issues/2236:
 TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" ac_cv_little_endian_double=yes"
+# Force disable semaphores (Android does not support them).
+TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" ac_cv_func_sem_open=no"
+TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" ac_cv_func_sem_timedwait=no"
+TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" ac_cv_func_sem_getvalue=no"
+TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" ac_cv_func_sem_unlink=no"
+
 TERMUX_PKG_RM_AFTER_INSTALL="
 lib/python${_MAJOR_VERSION}/test
 lib/python${_MAJOR_VERSION}/*/test
 lib/python${_MAJOR_VERSION}/*/tests
 "
-TERMUX_PKG_BREAKS="python2 (<= 2.7.15), python-dev"
-TERMUX_PKG_REPLACES="python-dev"
 
 termux_step_pre_configure() {
+	# -O3 gains some additional performance on at least aarch64.
+	CFLAGS="${CFLAGS/-Oz/-O3}"
+
 	# Needed when building with clang, as setup.py only probes
 	# gcc for include paths when finding headers for determining
 	# if extension modules should be built (specifically, the

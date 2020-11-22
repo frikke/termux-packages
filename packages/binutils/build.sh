@@ -1,9 +1,10 @@
 TERMUX_PKG_HOMEPAGE=https://www.gnu.org/software/binutils/
 TERMUX_PKG_DESCRIPTION="Collection of binary tools, the main ones being ld, the GNU linker, and as, the GNU assembler"
 TERMUX_PKG_LICENSE="GPL-2.0"
-TERMUX_PKG_VERSION=2.33.1
-TERMUX_PKG_SHA256=98aba5f673280451a09df3a8d8eddb3aa0c505ac183f1e2f9d00c67aa04c6f7d
-TERMUX_PKG_SRCURL=https://mirrors.kernel.org/gnu/binutils/binutils-${TERMUX_PKG_VERSION}.tar.gz
+TERMUX_PKG_VERSION=2.35.1
+TERMUX_PKG_REVISION=1
+TERMUX_PKG_SRCURL=https://mirrors.kernel.org/gnu/binutils/binutils-${TERMUX_PKG_VERSION}.tar.xz
+TERMUX_PKG_SHA256=3ced91db9bf01182b7e420eab68039f2083aed0a214c0424e257eae3ddee8607
 TERMUX_PKG_DEPENDS="libc++, zlib"
 TERMUX_PKG_BREAKS="binutils-dev"
 TERMUX_PKG_REPLACES="binutils-dev"
@@ -12,7 +13,7 @@ TERMUX_PKG_EXTRA_MAKE_ARGS="tooldir=$TERMUX_PREFIX"
 TERMUX_PKG_RM_AFTER_INSTALL="share/man/man1/windmc.1 share/man/man1/windres.1 bin/ld.bfd"
 TERMUX_PKG_NO_STATICSPLIT=true
 TERMUX_PKG_HAS_DEBUG=false
-# Debug build fails with:
+# Debug build fails with
 # ~/termux-build/binutils/src/binutils/readelf.c:19060:81: error: in call to 'fread', size * count is too large for the given buffer
 #     if (fread (ehdr32.e_type, sizeof (ehdr32) - EI_NIDENT, 1, filedata->handle) != 1)
 #                                                                               ^

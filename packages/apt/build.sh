@@ -1,12 +1,12 @@
 TERMUX_PKG_HOMEPAGE=https://packages.debian.org/apt
 TERMUX_PKG_DESCRIPTION="Front-end for the dpkg package manager"
 TERMUX_PKG_LICENSE="GPL-2.0"
-TERMUX_PKG_VERSION=1.4.9
-TERMUX_PKG_REVISION=24
-TERMUX_PKG_SRCURL=http://ftp.debian.org/debian/pool/main/a/apt/apt_${TERMUX_PKG_VERSION}.tar.xz
-TERMUX_PKG_SHA256=d4d65e7c84da86f3e6dcc933bba46a08db429c9d933b667c864f5c0e880bac0d
+TERMUX_PKG_VERSION=2.1.11
+TERMUX_PKG_REVISION=2
+TERMUX_PKG_SRCURL=http://deb.debian.org/debian/pool/main/a/apt/apt_${TERMUX_PKG_VERSION}.tar.xz
+TERMUX_PKG_SHA256=f49f0652d5d2cfa157f0197d9ce03953970a108813568bb1c69553fd3d5a4be3
 # apt-key requires utilities from coreutils, findutils, gpgv, grep, sed.
-TERMUX_PKG_DEPENDS="coreutils, dpkg, findutils, gpgv, grep, libc++, libcurl, liblzma, sed, termux-licenses, zlib"
+TERMUX_PKG_DEPENDS="coreutils, dpkg, findutils, gpgv, grep, libandroid-glob, libbz2, libc++, libcurl, libgnutls, liblz4, liblzma, sed, termux-licenses, zlib"
 TERMUX_PKG_CONFLICTS="apt-transport-https, libapt-pkg"
 TERMUX_PKG_REPLACES="apt-transport-https, libapt-pkg"
 TERMUX_PKG_RECOMMENDS="game-repo, science-repo"
@@ -19,8 +19,9 @@ etc/apt/trusted.gpg
 "
 
 TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
--DPERL_EXECUTABLE=$(which perl)
+-DPERL_EXECUTABLE=$(command -v perl)
 -DCMAKE_INSTALL_FULL_LOCALSTATEDIR=$TERMUX_PREFIX
+-DCACHE_DIR=${TERMUX_CACHE_DIR}/apt
 -DCOMMON_ARCH=$TERMUX_ARCH
 -DDPKG_DATADIR=$TERMUX_PREFIX/share/dpkg
 -DUSE_NLS=OFF
@@ -38,7 +39,6 @@ bin/apt-cdrom
 bin/apt-extracttemplates
 bin/apt-sortpkgs
 etc/apt/apt.conf.d
-lib/apt/methods/bzip2
 lib/apt/methods/cdrom
 lib/apt/methods/mirror
 lib/apt/methods/rred
@@ -53,6 +53,17 @@ termux_step_pre_configure() {
 	if $TERMUX_ON_DEVICE_BUILD; then
 		termux_error_exit "Package '$TERMUX_PKG_NAME' is not safe for on-device builds."
 	fi
+
+	# Prefix verification patch should be applied only for the
+	# builds with original prefix.
+	if [ "$TERMUX_PREFIX" = "/data/data/com.termux/files/usr" ]; then
+		patch -p1 -i $TERMUX_PKG_BUILDER_DIR/0012-verify-prefix.patch.txt
+	fi
+
+	# Fix i686 builds.
+	CXXFLAGS+=" -Wno-c++11-narrowing"
+	# Fix glob() on Android 7.
+	LDFLAGS+=" -Wl,--no-as-needed -landroid-glob"
 }
 
 termux_step_post_make_install() {

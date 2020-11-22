@@ -1,10 +1,9 @@
 TERMUX_PKG_HOMEPAGE=https://caddyserver.com/
 TERMUX_PKG_DESCRIPTION="Fast, cross-platform HTTP/2 web server"
 TERMUX_PKG_LICENSE="Apache-2.0"
-TERMUX_PKG_VERSION=1.0.3
-TERMUX_PKG_REVISION=1
+TERMUX_PKG_VERSION=2.2.1
 TERMUX_PKG_SRCURL=https://github.com/mholt/caddy/archive/v$TERMUX_PKG_VERSION.tar.gz
-TERMUX_PKG_SHA256=c1c7b337a5008d28c1956fd4f057104a78d0e24b74c30867cea988369b61fed3
+TERMUX_PKG_SHA256=dd1f313968a54c3e6be9b5d007b8b2ed88c46fbefc1eed49dcac35c08fbef1e2
 
 termux_step_make() {
 	termux_setup_golang
@@ -13,12 +12,11 @@ termux_step_make() {
 	mkdir -p $GOPATH/src/github.com/mholt/
 	cp -a $TERMUX_PKG_SRCDIR $GOPATH/src/github.com/mholt/caddy
 
-	cd $GOPATH/src/github.com/mholt/caddy/caddy
+	cd $GOPATH/src/github.com/mholt/caddy/cmd/caddy
 	export GO111MODULE=on
-	go build
+	go build -v .
 }
 
 termux_step_make_install() {
-	install -Dm700 $GOPATH/src/github.com/mholt/caddy/caddy/caddy \
-		$TERMUX_PREFIX/bin/caddy
+	install -Dm700 -t $TERMUX_PREFIX/bin $GOPATH/src/github.com/mholt/caddy/cmd/caddy/caddy
 }

@@ -2,11 +2,12 @@ TERMUX_PKG_HOMEPAGE=https://www.tug.org/texlive/
 TERMUX_PKG_DESCRIPTION="TeX Live is a distribution of the TeX typesetting system. This package contains architecture dependent binaries."
 TERMUX_PKG_LICENSE="GPL-2.0"
 TERMUX_PKG_MAINTAINER="Henrik Grimler @Grimler91"
-TERMUX_PKG_VERSION=20190410
+TERMUX_PKG_VERSION=20200406
+_SVN_VERSION=54456
 TERMUX_PKG_REVISION=7
-TERMUX_PKG_SRCURL=https://github.com/TeX-Live/texlive-source/archive/build-svn50882.tar.gz
-TERMUX_PKG_SHA256=a7462f8e29163faa52ad2ac658727b60f95241449832f1a4dac8d8a406d18233
-TERMUX_PKG_DEPENDS="libc++, libiconv, freetype, libpng, libgd, libgmp, libmpfr, libicu, liblua, poppler, libgraphite, harfbuzz, harfbuzz-icu, teckit, libpixman, libcairo, zlib"
+TERMUX_PKG_SRCURL=https://github.com/TeX-Live/texlive-source/archive/svn${_SVN_VERSION}.tar.gz
+TERMUX_PKG_SHA256=093caf1e502f80219342e137d53222ad9f0d59916d8e5323eefc1e211056b86f
+TERMUX_PKG_DEPENDS="libc++, libiconv, freetype, libpng, libgd, libgmp, libmpfr, libicu, liblua52, poppler, libgraphite, harfbuzz, harfbuzz-icu, teckit, libpixman, libcairo, zlib, zziplib"
 # libpcre, glib, fonconfig are dependencies to libcairo. pkg-config gives an error if they are missing
 # libuuid, libxml2 are needed by fontconfig
 TERMUX_PKG_BUILD_DEPENDS="icu-devtools, pcre, glib, fontconfig, libuuid, libxml2"
@@ -16,25 +17,26 @@ TERMUX_PKG_RECOMMENDS="texlive"
 TERMUX_PKG_HOSTBUILD=true
 
 TL_ROOT=$TERMUX_PREFIX/share/texlive
-TL_BINDIR=$TERMUX_PREFIX/bin
+TL_BINDIR=$TERMUX_PREFIX/bin/texlive
 
 TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 RANLIB=ranlib
 --mandir=$TERMUX_PREFIX/share/man
 --infodir=$TERMUX_PREFIX/share/info
+--bindir=$TL_BINDIR
 --datarootdir=$TL_ROOT
 --build=$TERMUX_BUILD_TUPLE
---enable-ttfdump=no
---enable-makeindexk=yes
---enable-makejvf=no
---enable-mendexk=no
---enable-musixtnt=no
---enable-ps2pk=no
---enable-seetexk=no
---enable-gregorio=no
+--disable-ttfdump
+--enable-makeindexk
+--disable-makejvf
+--disable-mendexk
+--disable-musixtnt
+--disable-ps2pk
+--disable-seetexk
+--disable-gregorio
 --disable-native-texlive-build
 --disable-bibtexu
---disable-dvisvgm
+--enable-dvisvgm
 --disable-dialog
 --disable-psutils
 --disable-multiplatform
@@ -60,11 +62,13 @@ RANLIB=ranlib
 --with-system-xpdf
 --with-system-lua
 --with-system-teckit
+--with-system-zziplib
 --without-x
 --with-banner-add=/Termux"
 
 # These files are provided by texlive:
 TERMUX_PKG_RM_AFTER_INSTALL="
+bin/a2ping
 bin/tlmgr
 bin/man
 share/texlive/texmf-dist/web2c/mktex.opt
@@ -85,7 +89,8 @@ share/texlive/texmf-dist/scripts
 share/texlive/texmf-dist/ttf2pk
 share/texlive/texmf-dist/source
 share/texlive/texmf-dist/chktex
-share/texlive/texmf-dist/hbf2gf"
+share/texlive/texmf-dist/hbf2gf
+"
 
 termux_step_host_build() {
 	mkdir -p auxdir/auxsub
@@ -115,9 +120,7 @@ termux_step_pre_configure() {
 	export CTANGLE=$TERMUX_PKG_HOSTBUILD_DIR/texk/web2c/ctangle
 	export CTANGLEBOOT=$TERMUX_PKG_HOSTBUILD_DIR/texk/web2c/ctangleboot
 	export TIE=$TERMUX_PKG_HOSTBUILD_DIR/texk/web2c/tie
-	export OTANGLE=$TERMUX_PKG_HOSTBUILD_DIR/texk/web2c/.libs/otangle
-	# otangle is linked against libkpathsea but can't find it, so we use LD_LIBRARY_PATH
-	export LD_LIBRARY_PATH=$TERMUX_PKG_HOSTBUILD_DIR/texk/kpathsea/.libs
+	export OTANGLE=$TERMUX_PKG_HOSTBUILD_DIR/texk/web2c/otangle
 
 	find "$TERMUX_PKG_SRCDIR"/texk/web2c/luatexdir -type f -exec sed -i \
 	     -e 's|gTrue|true|g' \
@@ -129,6 +132,6 @@ termux_step_pre_configure() {
 	     {} +
 
 	# These files are from upstream master:
-	cp "$TERMUX_PKG_BUILDER_DIR"/pdftoepdf-poppler0.76.0.cc "$TERMUX_PKG_SRCDIR"/texk/web2c/pdftexdir/pdftoepdf.cc # commit 473d82b
-	cp "$TERMUX_PKG_BUILDER_DIR"/pdftosrc-poppler0.76.0.cc "$TERMUX_PKG_SRCDIR"/texk/web2c/pdftexdir/pdftosrc.cc # commit 473d82b
+	cp "$TERMUX_PKG_BUILDER_DIR"/pdftoepdf-poppler0.86.0.cc "$TERMUX_PKG_SRCDIR"/texk/web2c/pdftexdir/pdftoepdf.cc # commit 7cabe29
+	cp "$TERMUX_PKG_BUILDER_DIR"/pdftosrc-poppler0.83.0.cc "$TERMUX_PKG_SRCDIR"/texk/web2c/pdftexdir/pdftosrc.cc # commit f0d0598b
 }

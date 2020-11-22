@@ -2,8 +2,9 @@ TERMUX_PKG_HOMEPAGE=https://www.gnu.org/software/bash/
 TERMUX_PKG_DESCRIPTION="A sh-compatible shell that incorporates useful features from the Korn shell (ksh) and C shell (csh)"
 TERMUX_PKG_LICENSE="GPL-3.0"
 _MAIN_VERSION=5.0
-_PATCH_VERSION=11
+_PATCH_VERSION=18
 TERMUX_PKG_VERSION=${_MAIN_VERSION}.${_PATCH_VERSION}
+TERMUX_PKG_REVISION=4
 TERMUX_PKG_SRCURL=https://mirrors.kernel.org/gnu/bash/bash-${_MAIN_VERSION}.tar.gz
 TERMUX_PKG_SHA256=b4a80f2ac66170b2913efbfb9f2594f1f76c7b1afd11f799e22035d63077fb4d
 TERMUX_PKG_DEPENDS="libandroid-support, libiconv, ncurses, readline (>= 8.0), termux-tools"
@@ -47,6 +48,13 @@ termux_step_pre_configure() {
 	PATCH_CHECKSUMS[009]=ed3ca21767303fc3de93934aa524c2e920787c506b601cc40a4897d4b094d903
 	PATCH_CHECKSUMS[010]=d6fbc325f0b5dc54ddbe8ee43020bced8bd589ddffea59d128db14b2e52a8a11
 	PATCH_CHECKSUMS[011]=2c4de332b91eaf797abbbd6c79709690b5cbd48b12e8dfe748096dbd7bf474ea
+	PATCH_CHECKSUMS[012]=2943ee19688018296f2a04dbfe30b7138b889700efa8ff1c0524af271e0ee233
+	PATCH_CHECKSUMS[013]=f5d7178d8da30799e01b83a0802018d913d6aa972dd2ddad3b927f3f3eb7099a
+	PATCH_CHECKSUMS[014]=5d6eee6514ee6e22a87bba8d22be0a8621a0ae119246f1c5a9a35db1f72af589
+	PATCH_CHECKSUMS[015]=a517df2dda93b26d5cbf00effefea93e3a4ccd6652f152f4109170544ebfa05e
+	PATCH_CHECKSUMS[016]=ffd1d7a54a99fa7f5b1825e4f7e95d8c8876bc2ca151f150e751d429c650b06d
+	PATCH_CHECKSUMS[017]=4cf3b9fafb8a66d411dd5fc9120032533a4012df1dc6ee024c7833373e2ddc31
+        PATCH_CHECKSUMS[018]=7c314e375a105a6642e8ed44f3808b9def89d15f7492fe2029a21ba9c0de81d3
 
 	for PATCH_NUM in $(seq -f '%03g' ${_PATCH_VERSION}); do
 		PATCHFILE=$TERMUX_PKG_CACHEDIR/bash_patch_${PATCH_NUM}.patch
@@ -57,6 +65,12 @@ termux_step_pre_configure() {
 		patch -p0 -i $PATCHFILE
 	done
 	unset PATCH_CHECKSUMS PATCHFILE PATCH_NUM
+
+	# Prefix verification patch should be applied only for the
+	# builds with original prefix.
+	if [ "$TERMUX_PREFIX" = "/data/data/com.termux/files/usr" ]; then
+		patch -p1 -i $TERMUX_PKG_BUILDER_DIR/verify-prefix.patch.txt
+	fi
 }
 
 termux_step_post_make_install() {

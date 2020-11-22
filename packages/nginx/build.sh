@@ -1,13 +1,12 @@
 TERMUX_PKG_HOMEPAGE=https://www.nginx.org
 TERMUX_PKG_DESCRIPTION="Lightweight HTTP server"
 TERMUX_PKG_LICENSE="BSD 2-Clause"
-TERMUX_PKG_MAINTAINER="Vishal Biswas @vishalbiswas"
-TERMUX_PKG_VERSION=1.17.4
+TERMUX_PKG_VERSION=1.19.4
 TERMUX_PKG_SRCURL=http://nginx.org/download/nginx-$TERMUX_PKG_VERSION.tar.gz
-TERMUX_PKG_SHA256=62854b365e66670ef4f1f8cc79124f914551444da974207cd5fe22d85710e555
+TERMUX_PKG_SHA256=61df546927905a0d624f9396bb7a8bc7ca7fd26522ce9714d56a78b73284000e
 TERMUX_PKG_DEPENDS="libandroid-glob, libcrypt, pcre, openssl, zlib"
 TERMUX_PKG_BUILD_IN_SRC=true
-
+TERMUX_PKG_SERVICE_SCRIPT=("nginx" 'mkdir -p ~/.nginx\nif [ -f "$HOME/.nginx/nginx.conf" ]; then CONFIG="$HOME/.nginx/nginx.conf"; else CONFIG="$PREFIX/etc/nginx/nginx.conf"; fi\nexec nginx -p ~/.nginx -g "daemon off;" -c $CONFIG 2>&1')
 TERMUX_PKG_CONFFILES="
 etc/nginx/fastcgi.conf
 etc/nginx/fastcgi_params
@@ -19,7 +18,6 @@ etc/nginx/scgi_params
 etc/nginx/uwsgi_params
 etc/nginx/win-utf"
 
-
 termux_step_pre_configure() {
 	# Certain packages are not safe to build on device because their
 	# build.sh script deletes specific files in $TERMUX_PREFIX.
@@ -30,7 +28,7 @@ termux_step_pre_configure() {
 	CPPFLAGS="$CPPFLAGS -DIOV_MAX=1024"
 	LDFLAGS="$LDFLAGS -landroid-glob"
 
-	# remove config from previouse installs
+	# remove config from previous installs
 	rm -rf "$TERMUX_PREFIX/etc/nginx"
 }
 
@@ -103,4 +101,3 @@ termux_step_post_massage() {
 		mkdir -p "$TERMUX_PKG_MASSAGEDIR/$TERMUX_PREFIX/var/lib/nginx/$dir"
 	done
 }
-

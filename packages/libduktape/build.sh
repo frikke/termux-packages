@@ -1,14 +1,11 @@
 TERMUX_PKG_HOMEPAGE=https://www.duktape.org/
 TERMUX_PKG_DESCRIPTION="An embeddable Javascript engine with a focus on portability and compact footprint"
 TERMUX_PKG_LICENSE="MIT"
-TERMUX_PKG_VERSION=2.4.0
+TERMUX_PKG_SRCURL=https://github.com/svaarala/duktape.git
+TERMUX_PKG_VERSION=2.6.0
 TERMUX_PKG_REPLACES="duktape (<< 2.3.0-1), libduktape-dev"
 TERMUX_PKG_BREAKS="duktape (<< 2.3.0-1), libduktape-dev"
 TERMUX_PKG_BUILD_IN_SRC=true
-
-termux_step_extract_package() {
-	git clone --depth=1 https://github.com/svaarala/duktape.git -b v${TERMUX_PKG_VERSION} ${TERMUX_PKG_SRCDIR}
-}
 
 termux_step_pre_configure() {
 	if $TERMUX_ON_DEVICE_BUILD; then

@@ -236,6 +236,8 @@ lint_package() {
 					echo "LENGTHS OF 'TERMUX_PKG_SRCURL' AND 'TERMUX_PKG_SHA256' ARE NOT EQUAL"
 					pkg_lint_error=true
 				fi
+			elif [ "${TERMUX_PKG_SRCURL: -4}" == ".git" ]; then
+				echo "NOT SET (acceptable since TERMUX_PKG_SRCURL is git repo)"
 			else
 				echo "NOT SET"
 				pkg_lint_error=true
@@ -376,6 +378,17 @@ lint_package() {
 				echo "PASS"
 			fi
 			unset file_path_ok
+		fi
+
+		if [ -n "$TERMUX_PKG_SERVICE_SCRIPT" ]; then
+			echo -n "TERMUX_PKG_SERVICE_SCRIPT: "
+			array_length=${#TERMUX_PKG_SERVICE_SCRIPT[@]}
+			if [ $(( $array_length & 1 )) -eq 1 ]; then
+				echo "INVALID (TERMUX_PKG_SERVICE_SCRIPT has to be an array of even length)"
+				pkg_lint_error=true
+			else
+				echo "PASS"
+			fi
 		fi
 
 		if $pkg_lint_error; then

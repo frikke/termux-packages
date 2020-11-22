@@ -1,9 +1,9 @@
 TERMUX_PKG_HOMEPAGE=https://www.nano-editor.org/
 TERMUX_PKG_DESCRIPTION="Small, free and friendly text editor"
 TERMUX_PKG_LICENSE="GPL-2.0"
-TERMUX_PKG_VERSION=4.5
+TERMUX_PKG_VERSION=5.3
 TERMUX_PKG_SRCURL=https://nano-editor.org/dist/latest/nano-$TERMUX_PKG_VERSION.tar.xz
-TERMUX_PKG_SHA256=ded5c38f5ecd9de2b624e0db8013a375c169d3fbbd49575967b868847df8f533
+TERMUX_PKG_SHA256=c5c1cbcf622d9a96b6030d66409ed12b204e8bc01ef5e6554ebbe6fb1d734352
 TERMUX_PKG_DEPENDS="libandroid-support, libandroid-glob, ncurses"
 TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 ac_cv_header_pwd_h=no
@@ -17,7 +17,7 @@ TERMUX_PKG_RM_AFTER_INSTALL="bin/rnano share/man/man1/rnano.1 share/nano/man-htm
 termux_step_pre_configure() {
 	LDFLAGS+=" -landroid-glob"
 	if $TERMUX_DEBUG; then
-		# When doing debug build, -D_FORTIFY_SOURCE=2 gives this error:
+		#When doing debug build, -D_FORTIFY_SOURCE=2 gives this error:
 		# /home/builder/.termux-build/_lib/16-aarch64-21-v3/bin/../sysroot/usr/include/bits/fortify/string.h:79:26: error: use of undeclared identifier '__USE_FORTIFY_LEVEL'
 		export CFLAGS=${CFLAGS/-D_FORTIFY_SOURCE=2/}
 	fi

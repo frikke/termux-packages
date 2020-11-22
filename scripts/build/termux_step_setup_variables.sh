@@ -2,8 +2,6 @@ termux_step_setup_variables() {
 	: "${TERMUX_MAKE_PROCESSES:="$(nproc)"}"
 	: "${TERMUX_TOPDIR:="$HOME/.termux-build"}"
 	: "${TERMUX_ARCH:="aarch64"}" # arm, aarch64, i686 or x86_64.
-	: "${TERMUX_PREFIX:="/data/data/com.termux/files/usr"}"
-	: "${TERMUX_ANDROID_HOME:="/data/data/com.termux/files/home"}"
 	: "${TERMUX_DEBUG:="false"}"
 	: "${TERMUX_PKG_API_LEVEL:="24"}"
 	: "${TERMUX_NO_CLEAN:="false"}"
@@ -18,11 +16,6 @@ termux_step_setup_variables() {
 		# For on-device builds cross-compiling is not supported so we can
 		# store information about built packages under $TERMUX_TOPDIR.
 		TERMUX_BUILT_PACKAGES_DIRECTORY="$TERMUX_TOPDIR/.built-packages"
-
-		# These variables should not be configurable for on-device builds.
-		# TERMUX_ARCH already set in build-package.sh
-		TERMUX_PREFIX="/data/data/com.termux/files/usr"
-		TERMUX_ANDROID_HOME="/data/data/com.termux/files/home"
 		TERMUX_NO_CLEAN="true"
 
 		# On device builds are considered as unofficial.
@@ -35,7 +28,7 @@ termux_step_setup_variables() {
 		fi
 	else
 		TERMUX_BUILT_PACKAGES_DIRECTORY="/data/data/.built-packages"
-		: "${TERMUX_PKG_MAINTAINER:="Fredrik Fornwall @fornwall"}"
+		: "${TERMUX_PKG_MAINTAINER:="Termux members @termux"}"
 	fi
 
 	TERMUX_REPO_URL=(
@@ -96,12 +89,19 @@ termux_step_setup_variables() {
 	export prefix=${TERMUX_PREFIX}
 	export PREFIX=${TERMUX_PREFIX}
 
+	if [ "${TERMUX_PACKAGES_OFFLINE-false}" = "true" ]; then
+		# In "offline" mode store/pick cache from directory with
+		# build.sh script.
+		TERMUX_PKG_CACHEDIR=$TERMUX_PKG_BUILDER_DIR/cache
+	else
+		TERMUX_PKG_CACHEDIR=$TERMUX_TOPDIR/$TERMUX_PKG_NAME/cache
+	fi
 	TERMUX_PKG_BUILDDIR=$TERMUX_TOPDIR/$TERMUX_PKG_NAME/build
-	TERMUX_PKG_CACHEDIR=$TERMUX_TOPDIR/$TERMUX_PKG_NAME/cache
 	TERMUX_PKG_MASSAGEDIR=$TERMUX_TOPDIR/$TERMUX_PKG_NAME/massage
 	TERMUX_PKG_PACKAGEDIR=$TERMUX_TOPDIR/$TERMUX_PKG_NAME/package
 	TERMUX_PKG_SRCDIR=$TERMUX_TOPDIR/$TERMUX_PKG_NAME/src
 	TERMUX_PKG_SHA256=""
+	TERMUX_PKG_GIT_BRANCH="" # branch defaults to 'v$TERMUX_PKG_VERSION' unless this variable is defined
 	TERMUX_PKG_TMPDIR=$TERMUX_TOPDIR/$TERMUX_PKG_NAME/tmp
 	TERMUX_PKG_HOSTBUILD_DIR=$TERMUX_TOPDIR/$TERMUX_PKG_NAME/host-build
 	TERMUX_PKG_PLATFORM_INDEPENDENT=false
@@ -125,6 +125,7 @@ termux_step_setup_variables() {
 	TERMUX_PKG_SUGGESTS=""
 	TERMUX_PKG_REPLACES=""
 	TERMUX_PKG_PROVIDES="" #https://www.debian.org/doc/debian-policy/#virtual-packages-provides
+        TERMUX_PKG_SERVICE_SCRIPT=() # Fill with entries like: ("daemon name" 'script to execute'). Script is echoed with -e so can contain \n for multiple lines
 	TERMUX_PKG_CONFFILES=""
 	# Set if a host build should be done in TERMUX_PKG_HOSTBUILD_DIR:
 	TERMUX_PKG_HOSTBUILD=false
@@ -132,6 +133,8 @@ termux_step_setup_variables() {
 	TERMUX_CMAKE_BUILD=Ninja # Which cmake generator to use
 	TERMUX_PKG_HAS_DEBUG=true # set to false if debug build doesn't exist or doesn't work, for example for python based packages
 	TERMUX_PKG_METAPACKAGE=false
+	TERMUX_PKG_QUICK_REBUILD=false # set this temporarily when iterating on a large package and you don't want the source and build directories wiped every time you make a mistake
+	TERMUX_PKG_NO_ELF_CLEANER=false # set this to true to disable running of termux-elf-cleaner on built binaries
 
 	unset CFLAGS CPPFLAGS LDFLAGS CXXFLAGS
 }

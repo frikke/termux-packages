@@ -1,7 +1,7 @@
 TERMUX_PKG_HOMEPAGE=https://www.cryptopp.com/
 TERMUX_PKG_DESCRIPTION="A free C++ class library of cryptographic schemes"
 TERMUX_PKG_LICENSE="BSL-1.0"
-TERMUX_PKG_MAINTAINER="Leonid Plyushch <leonid.plyushch@gmail.com>"
+TERMUX_PKG_MAINTAINER="Leonid Pliushch <leonid.pliushch@gmail.com>"
 TERMUX_PKG_VERSION=8.2.0
 TERMUX_PKG_REVISION=5
 TERMUX_PKG_SRCURL=https://www.cryptopp.com/cryptopp${TERMUX_PKG_VERSION//./}.zip
@@ -16,12 +16,14 @@ bin/
 share/cryptopp/
 "
 
-termux_step_extract_package() {
+termux_step_get_source() {
 	mkdir -p $TERMUX_PKG_CACHEDIR
 	termux_download $TERMUX_PKG_SRCURL $TERMUX_PKG_CACHEDIR/cryptopp.zip \
 		$TERMUX_PKG_SHA256
-
 	mkdir -p $TERMUX_PKG_SRCDIR
+}
+
+termux_step_post_get_source() {
 	cd $TERMUX_PKG_SRCDIR
 	unzip $TERMUX_PKG_CACHEDIR/cryptopp.zip
 }

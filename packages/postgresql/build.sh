@@ -1,11 +1,10 @@
 TERMUX_PKG_HOMEPAGE=https://www.postgresql.org
 TERMUX_PKG_DESCRIPTION="Object-relational SQL database"
 TERMUX_PKG_LICENSE="BSD"
-TERMUX_PKG_MAINTAINER='Vishal Biswas @vishalbiswas'
-TERMUX_PKG_VERSION=11.5
-TERMUX_PKG_REVISION=1
+TERMUX_PKG_LICENSE_FILE="COPYRIGHT"
+TERMUX_PKG_VERSION=13.1
 TERMUX_PKG_SRCURL=https://ftp.postgresql.org/pub/source/v$TERMUX_PKG_VERSION/postgresql-$TERMUX_PKG_VERSION.tar.bz2
-TERMUX_PKG_SHA256=7fdf23060bfc715144cbf2696cf05b0fa284ad3eb21f0c378591c6bca99ad180
+TERMUX_PKG_SHA256=12345c83b89aa29808568977f5200d6da00f88a035517f925293355432ffe61f
 TERMUX_PKG_DEPENDS="openssl, libcrypt, readline, libandroid-shmem, libuuid, libxml2, libicu, zlib"
 # - pgac_cv_prog_cc_ldflags__Wl___as_needed: Inform that the linker supports as-needed. It's
 #   not stricly necessary but avoids unnecessary linking of binaries.
@@ -29,12 +28,13 @@ TERMUX_PKG_RM_AFTER_INSTALL="lib/libecpg* bin/ecpg share/man/man1/ecpg.1"
 TERMUX_PKG_HOSTBUILD=true
 TERMUX_PKG_BREAKS="postgresql-contrib (<= 10.3-1), postgresql-dev"
 TERMUX_PKG_REPLACES="postgresql-contrib (<= 10.3-1), postgresql-dev"
+TERMUX_PKG_SERVICE_SCRIPT=("postgres" 'mkdir -p ~/.postgres\nexec postgres -D ~/.postgres/ 2>&1')
 
 termux_step_host_build() {
 	# Build a native zic binary which we have patched to
 	# use symlinks instead of hard links.
 	$TERMUX_PKG_SRCDIR/configure --without-readline
-	make ./src/timezone/zic
+	make
 }
 
 termux_step_pre_configure() {
@@ -51,6 +51,7 @@ termux_step_post_make_install() {
 
 	for contrib in \
 		hstore \
+		citext \
 		pageinspect \
 		pgcrypto \
 		pgrowlocks \

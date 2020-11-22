@@ -23,6 +23,13 @@ cd "$(realpath "$(dirname "$0")")"
 TERMUX_SCRIPTDIR=$(pwd)
 export TERMUX_SCRIPTDIR
 
+# Automatically enable offline set of sources and build tools.
+# Offline termux-packages bundle can be created by executing
+# script ./scripts/setup-offline-bundle.sh.
+if [ -f "${TERMUX_SCRIPTDIR}/build-tools/.installed" ]; then
+	export TERMUX_PACKAGES_OFFLINE=true
+fi
+
 # Lock file to prevent parallel running in the same environment.
 TERMUX_BUILD_LOCK_FILE="${TMPDIR}/.termux-build.lck"
 if [ ! -e "$TERMUX_BUILD_LOCK_FILE" ]; then
@@ -40,6 +47,10 @@ source "$TERMUX_SCRIPTDIR/scripts/build/termux_error_exit.sh"
 # Utility function to download a resource with an expected checksum.
 # shellcheck source=scripts/build/termux_download.sh
 source "$TERMUX_SCRIPTDIR/scripts/build/termux_download.sh"
+
+# Utility function for setting up GHC toolchain.
+# shellcheck source=scripts/build/setup/termux_setup_ghc.sh
+source "$TERMUX_SCRIPTDIR/scripts/build/setup/termux_setup_ghc.sh"
 
 # Utility function for golang-using packages to setup a go toolchain.
 # shellcheck source=scripts/build/setup/termux_setup_golang.sh
@@ -85,17 +96,29 @@ source "$TERMUX_SCRIPTDIR/scripts/build/termux_download_deb.sh"
 # shellcheck source=scripts/build/termux_get_repo_files.sh
 source "$TERMUX_SCRIPTDIR/scripts/build/termux_get_repo_files.sh"
 
-# Source the package build script and start building. No to be overridden by packages.
+# Source the package build script and start building. Not to be overridden by packages.
 # shellcheck source=scripts/build/termux_step_start_build.sh
 source "$TERMUX_SCRIPTDIR/scripts/build/termux_step_start_build.sh"
 
-# Run just after sourcing $TERMUX_PKG_BUILDER_SCRIPT. May be overridden by packages.
-# shellcheck source=scripts/build/termux_step_extract_package.sh
-source "$TERMUX_SCRIPTDIR/scripts/build/termux_step_extract_package.sh"
+# Run just after sourcing $TERMUX_PKG_BUILDER_SCRIPT. Can be overridden by packages.
+# shellcheck source=scripts/build/get_source/termux_step_get_source.sh
+source "$TERMUX_SCRIPTDIR/scripts/build/get_source/termux_step_get_source.sh"
 
-# Hook for packages to act just after the package has been extracted.
-# Invoked in $TERMUX_PKG_SRCDIR.
-termux_step_post_extract_package() {
+# Run from termux_step_get_source if TERMUX_PKG_SRCURL ends with .git.
+# shellcheck source=scripts/build/get_source/termux_step_get_source.sh
+source "$TERMUX_SCRIPTDIR/scripts/build/get_source/termux_git_clone_src.sh"
+
+# Run from termux_step_get_source if TERMUX_PKG_SRCURL does not ends with .git.
+# shellcheck source=scripts/build/get_source/termux_download_src_archive.sh
+source "$TERMUX_SCRIPTDIR/scripts/build/get_source/termux_download_src_archive.sh"
+
+# Run from termux_step_get_source after termux_download_src_archive.
+# shellcheck source=scripts/build/get_source/termux_unpack_src_archive.sh
+source "$TERMUX_SCRIPTDIR/scripts/build/get_source/termux_unpack_src_archive.sh"
+
+# Hook for packages to act just after the package sources have been obtained.
+# Invoked from $TERMUX_PKG_SRCDIR.
+termux_step_post_get_source() {
 	return
 }
 
@@ -104,7 +127,7 @@ termux_step_post_extract_package() {
 source "$TERMUX_SCRIPTDIR/scripts/build/termux_step_handle_hostbuild.sh"
 
 # Perform a host build. Will be called in $TERMUX_PKG_HOSTBUILD_DIR.
-# After termux_step_post_extract_package() and before termux_step_patch_package()
+# After termux_step_post_get_source() and before termux_step_patch_package()
 # shellcheck source=scripts/build/termux_step_host_build.sh
 source "$TERMUX_SCRIPTDIR/scripts/build/termux_step_host_build.sh"
 
@@ -159,6 +182,10 @@ termux_step_post_make_install() {
 	return
 }
 
+# Add service scripts from array TERMUX_PKG_SERVICE_SCRIPT, if it is set
+# shellcheck source=scripts/build/termux_step_install_service_scripts.sh
+source "$TERMUX_SCRIPTDIR/scripts/build/termux_step_install_service_scripts.sh"
+
 # Link/copy the LICENSE for the package to $TERMUX_PREFIX/share/$TERMUX_PKG_NAME/
 # shellcheck source=scripts/build/termux_step_install_license.sh
 source "$TERMUX_SCRIPTDIR/scripts/build/termux_step_install_license.sh"
@@ -166,6 +193,11 @@ source "$TERMUX_SCRIPTDIR/scripts/build/termux_step_install_license.sh"
 # Function to cp (through tar) installed files to massage dir
 # shellcheck source=scripts/build/termux_step_extract_into_massagedir.sh
 source "$TERMUX_SCRIPTDIR/scripts/build/termux_step_extract_into_massagedir.sh"
+
+# Hook function to create {pre,post}install, {pre,post}rm-scripts for subpkgs
+termux_step_create_subpkg_debscripts() {
+	return
+}
 
 # Create all subpackages. Run from termux_step_massage
 # shellcheck source=scripts/build/termux_create_subpackages.sh
@@ -210,21 +242,21 @@ if [ "$TERMUX_ON_DEVICE_BUILD" = "true" ]; then
 fi
 
 _show_usage() {
-    echo "Usage: ./build-package.sh [options] PACKAGE_1 PACKAGE_2 ..."
-    echo
-    echo "Build a package by creating a .deb file in the debs/ folder."
-    echo
-    echo "Available options:"
-    [ "$TERMUX_ON_DEVICE_BUILD" = "false" ] && echo "  -a The architecture to build for: aarch64(default), arm, i686, x86_64 or all."
-    echo "  -d Build with debug symbols."
-    echo "  -D Build a disabled package in disabled-packages/."
-    echo "  -f Force build even if package has already been built."
-    [ "$TERMUX_ON_DEVICE_BUILD" = "false" ] && echo "  -i Download and extract dependencies instead of building them."
-    echo "  -I Download and extract dependencies instead of building them, keep existing /data/data/com.termux files."
-    echo "  -q Quiet build."
-    echo "  -s Skip dependency check."
-    echo "  -o Specify deb directory. Default: debs/."
-    exit 1
+	echo "Usage: ./build-package.sh [options] PACKAGE_1 PACKAGE_2 ..."
+	echo
+	echo "Build a package by creating a .deb file in the debs/ folder."
+	echo
+	echo "Available options:"
+	[ "$TERMUX_ON_DEVICE_BUILD" = "false" ] && echo "  -a The architecture to build for: aarch64(default), arm, i686, x86_64 or all."
+	echo "  -d Build with debug symbols."
+	echo "  -D Build a disabled package in disabled-packages/."
+	echo "  -f Force build even if package has already been built."
+	[ "$TERMUX_ON_DEVICE_BUILD" = "false" ] && echo "  -i Download and extract dependencies instead of building them."
+	echo "  -I Download and extract dependencies instead of building them, keep existing $TERMUX_BASE_DIR files."
+	echo "  -q Quiet build."
+	echo "  -s Skip dependency check."
+	echo "  -o Specify deb directory. Default: debs/."
+	exit 1
 }
 
 while getopts :a:hdDfiIqso: option; do
@@ -258,6 +290,27 @@ shift $((OPTIND-1))
 
 if [ "$#" -lt 1 ]; then _show_usage; fi
 unset -f _show_usage
+
+if [ "${TERMUX_INSTALL_DEPS-false}" = "true" ]; then
+	# Setup PGP keys for verifying integrity of dependencies.
+	# Keys are obtained from our keyring package.
+	gpg --list-keys 2218893D3F679BEFC421FD976700B77E6D8D0AE7 > /dev/null 2>&1 || {
+		gpg --import "$TERMUX_SCRIPTDIR/packages/termux-keyring/fornwall.gpg"
+		gpg --no-tty --command-file <(echo -e "trust\n5\ny")  --edit-key 2218893D3F679BEFC421FD976700B77E6D8D0AE7
+	}
+	gpg --list-keys B63168609E8839CA9150CE2DD9EFD56891B2BB50 > /dev/null 2>&1 || {
+		gpg --import "$TERMUX_SCRIPTDIR/packages/termux-keyring/grimler.gpg"
+		gpg --no-tty --command-file <(echo -e "trust\n5\ny")  --edit-key B63168609E8839CA9150CE2DD9EFD56891B2BB50
+	}
+	gpg --list-keys CC72CF8BA7DBFA0182877D045A897D96E57CF20C > /dev/null 2>&1 || {
+		gpg --import "$TERMUX_SCRIPTDIR/packages/termux-keyring/termux-autobuilds.gpg"
+		gpg --no-tty --command-file <(echo -e "trust\n5\ny")  --edit-key CC72CF8BA7DBFA0182877D045A897D96E57CF20C
+	}
+	gpg --list-keys 3B6B548ADE5EA3BDD33CEEF045F2964132545795 > /dev/null 2>&1 || {
+		gpg --import "$TERMUX_SCRIPTDIR/packages/termux-keyring/xeffyr.gpg"
+		gpg --no-tty --command-file <(echo -e "trust\n5\ny")  --edit-key 3B6B548ADE5EA3BDD33CEEF045F2964132545795
+	}
+fi
 
 while (($# > 0)); do
 	# Following commands must be executed under lock to prevent running
@@ -303,9 +356,10 @@ while (($# > 0)); do
 		termux_step_setup_variables
 		termux_step_handle_buildarch
 		termux_step_start_build
-		termux_step_extract_package
+		cd "$TERMUX_PKG_CACHEDIR"
+		termux_step_get_source
 		cd "$TERMUX_PKG_SRCDIR"
-		termux_step_post_extract_package
+		termux_step_post_get_source
 		termux_step_handle_hostbuild
 		termux_step_setup_toolchain
 		termux_step_patch_package
@@ -322,6 +376,7 @@ while (($# > 0)); do
 		termux_step_make_install
 		cd "$TERMUX_PKG_BUILDDIR"
 		termux_step_post_make_install
+		termux_step_install_service_scripts
 		termux_step_install_license
 		cd "$TERMUX_PKG_MASSAGEDIR"
 		termux_step_extract_into_massagedir

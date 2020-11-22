@@ -1,9 +1,9 @@
 TERMUX_PKG_HOMEPAGE=https://github.com/beanshell/beanshell
 TERMUX_PKG_DESCRIPTION="Small, free, embeddable, source level Java interpreter with object based scripting language features written in Java"
 TERMUX_PKG_LICENSE="Apache-2.0"
-TERMUX_PKG_MAINTAINER="Leonid Plyushch <leonid.plyushch@gmail.com>"
+TERMUX_PKG_MAINTAINER="Leonid Pliushch <leonid.pliushch@gmail.com>"
 TERMUX_PKG_VERSION=2.0b6
-TERMUX_PKG_REVISION=4
+TERMUX_PKG_REVISION=7
 TERMUX_PKG_SRCURL=https://github.com/beanshell/beanshell/releases/download/$TERMUX_PKG_VERSION/bsh-$TERMUX_PKG_VERSION.jar
 TERMUX_PKG_SHA256=a17955976070c0573235ee662f2794a78082758b61accffce8d3f8aedcd91047
 TERMUX_PKG_DEPENDS="dash, termux-tools"
@@ -28,9 +28,17 @@ termux_step_make_install() {
 
 	{
 		echo "#!$TERMUX_PREFIX/bin/sh"
-		echo "dalvikvm -cp $TERMUX_PREFIX/share/dex/beanshell.jar bsh.Interpreter \"\$@\""
+		echo "dalvikvm -Xcompiler-option --compiler-filter=speed -cp $TERMUX_PREFIX/share/dex/beanshell.jar bsh.Interpreter \"\$@\""
 	} > "$TERMUX_PREFIX"/bin/beanshell
 
 	chmod 700 "$TERMUX_PREFIX"/bin/beanshell
 	ln -sfr "$TERMUX_PREFIX"/bin/beanshell "$TERMUX_PREFIX"/bin/bsh
+}
+
+termux_step_create_debscripts() {
+	cat <<- EOF > ./postinst
+	#!${TERMUX_PREFIX}/bin/bash
+	rm -f $TERMUX_PREFIX/share/dex/oat/*/beanshell.{art,oat,odex,vdex} >/dev/null 2>&1
+	exit 0
+	EOF
 }

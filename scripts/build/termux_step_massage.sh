@@ -27,8 +27,10 @@ termux_step_massage() {
 		set -e -o pipefail
 	fi
 
-	# Remove entries unsupported by Android's linker:
-	find . \( -path "./bin/*" -o -path "./lib/*" -o -path "./libexec/*" \) -type f -print0 | xargs -r -0 "$TERMUX_ELF_CLEANER"
+	if [ "$TERMUX_PKG_NO_ELF_CLEANER" != "true" ]; then
+		# Remove entries unsupported by Android's linker:
+		find . \( -path "./bin/*" -o -path "./lib/*" -o -path "./libexec/*" \) -type f -print0 | xargs -r -0 "$TERMUX_ELF_CLEANER"
+	fi
 
 	# Fix shebang paths:
 	while IFS= read -r -d '' file
@@ -36,6 +38,9 @@ termux_step_massage() {
 		head -c 100 "$file" | grep -E "^#\!.*\\/bin\\/.*" | grep -q -E -v "^#\! ?\\/system" && \
 			sed --follow-symlinks -i -E "1 s@^#\!(.*)/bin/(.*)@#\!$TERMUX_PREFIX/bin/\2@" "$file"
 	done < <(find -L . -type f -print0)
+
+	# Delete the info directory file.
+	rm -rf ./share/info/dir
 
 	test ! -z "$TERMUX_PKG_RM_AFTER_INSTALL" && rm -Rf $TERMUX_PKG_RM_AFTER_INSTALL
 

@@ -1,9 +1,9 @@
 TERMUX_PKG_HOMEPAGE=https://www.freedesktop.org/wiki/Software/PulseAudio
 TERMUX_PKG_DESCRIPTION="A featureful, general-purpose sound server"
 TERMUX_PKG_LICENSE="GPL-2.0"
+TERMUX_PKG_SRCURL=https://github.com/pulseaudio/pulseaudio.git
 TERMUX_PKG_VERSION=13.0
-TERMUX_PKG_SHA256=961b23ca1acfd28f2bc87414c27bb40e12436efcf2158d29721b1e89f3f28057
-TERMUX_PKG_SRCURL=https://www.freedesktop.org/software/pulseaudio/releases/pulseaudio-${TERMUX_PKG_VERSION}.tar.xz
+TERMUX_PKG_REVISION=2
 TERMUX_PKG_DEPENDS="libltdl, libsndfile, libandroid-glob, libsoxr, speexdsp"
 TERMUX_PKG_BREAKS="libpulseaudio-dev, libpulseaudio"
 TERMUX_PKG_REPLACES="libpulseaudio-dev, libpulseaudio"
@@ -21,6 +21,10 @@ TERMUX_PKG_EXTRA_CONFIGURE_ARGS="--disable-neon-opt
 --disable-gsettings
 ax_cv_PTHREAD_PRIO_INHERIT=no"
 TERMUX_PKG_CONFFILES="etc/pulse/client.conf etc/pulse/daemon.conf etc/pulse/default.pa etc/pulse/system.pa"
+
+termux_step_post_get_source() {
+	NOCONFIGURE=1 ./bootstrap.sh
+}
 
 termux_step_pre_configure() {
 	# Our aaudio sink module needs libaaudio.so from a later android api version:
@@ -41,7 +45,7 @@ termux_step_pre_configure() {
 	mkdir $TERMUX_PKG_SRCDIR/src/modules/aaudio
 	cp $TERMUX_PKG_BUILDER_DIR/module-aaudio-sink.c $TERMUX_PKG_SRCDIR/src/modules/aaudio
 
-	export LIBS="-llog -landroid-glob"
+	export LIBS="-landroid-glob"
 }
 
 termux_step_post_make_install() {

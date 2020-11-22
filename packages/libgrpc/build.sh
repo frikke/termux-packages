@@ -1,53 +1,36 @@
 TERMUX_PKG_HOMEPAGE=https://grpc.io/
 TERMUX_PKG_DESCRIPTION="High performance, open source, general RPC framework that puts mobile and HTTP/2 first"
 TERMUX_PKG_LICENSE="Apache-2.0"
-TERMUX_PKG_MAINTAINER="Vishal Biswas @vishalbiswas"
-TERMUX_PKG_VERSION=1.24.3
+TERMUX_PKG_SRCURL=https://github.com/grpc/grpc.git
+TERMUX_PKG_VERSION=1.33.2
 TERMUX_PKG_DEPENDS="libc++, openssl, protobuf, c-ares, zlib"
 TERMUX_PKG_BREAKS="libgrpc-dev"
 TERMUX_PKG_REPLACES="libgrpc-dev"
-TERMUX_PKG_BUILD_DEPENDS="libprotobuf"
+TERMUX_PKG_BUILD_DEPENDS="gflags, gflags-static, libprotobuf"
 TERMUX_PKG_HOSTBUILD=true
 TERMUX_PKG_BUILD_IN_SRC=true
 TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
--DCMAKE_STRIP=$(which strip)
--DGIT_EXECUTABLE=$(which git)
+-DCMAKE_STRIP=$(command -v strip)
+-DGIT_EXECUTABLE=$(command -v git)
 -DBUILD_SHARED_LIBS=ON
 -DgRPC_CARES_PROVIDER=package
 -DgRPC_PROTOBUF_PROVIDER=package
 -DgRPC_SSL_PROVIDER=package
 -DgRPC_ZLIB_PROVIDER=package
+-DgRPC_GFLAGS_PROVIDER=package
 -DRUN_HAVE_POSIX_REGEX=0
 -DRUN_HAVE_STD_REGEX=0
 -DRUN_HAVE_STEADY_CLOCK=0
 -DProtobuf_PROTOC_LIBRARY=$TERMUX_PREFIX/lib/libprotoc.so
 "
 
-termux_step_extract_package() {
-	local CHECKED_OUT_FOLDER=$TERMUX_PKG_CACHEDIR/checkout-$TERMUX_PKG_VERSION
-	if [ ! -d $CHECKED_OUT_FOLDER ]; then
-		local TMP_CHECKOUT=$TERMUX_PKG_TMPDIR/tmp-checkout
-		rm -Rf $TMP_CHECKOUT
-		mkdir -p $TMP_CHECKOUT
-
-		git clone --depth 1 \
-			--branch v$TERMUX_PKG_VERSION \
-			https://github.com/grpc/grpc.git \
-			$TMP_CHECKOUT
-		cd $TMP_CHECKOUT
-		git submodule update --init # --depth 1
-		mv $TMP_CHECKOUT $CHECKED_OUT_FOLDER
-	fi
-
-	mkdir $TERMUX_PKG_SRCDIR
-	cd $TERMUX_PKG_SRCDIR
-	cp -Rf $CHECKED_OUT_FOLDER/* .
-
+termux_step_post_get_source() {
 	termux_setup_protobuf
 }
 
 termux_step_host_build() {
 	termux_setup_cmake
+	termux_setup_ninja
 
 	cd $TERMUX_PKG_SRCDIR
 	export LD=gcc
@@ -59,11 +42,10 @@ termux_step_host_build() {
 	# when building version 1.17.2:
 	CXXFLAGS="-Wno-error=class-memaccess" \
 		CFLAGS="-Wno-implicit-fallthrough" \
-		make -j $TERMUX_MAKE_PROCESSES \
-		HAS_SYSTEM_PROTOBUF=false \
-		prefix=$TERMUX_PKG_HOSTBUILD_DIR \
-		install
-	make clean
+		cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$TERMUX_PKG_HOSTBUILD_DIR
+	ninja -j $TERMUX_MAKE_PROCESSES install
+	ninja -t clean
+	rm -rf CMakeCache.txt CMakeFiles
 }
 
 termux_step_pre_configure() {

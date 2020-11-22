@@ -2,11 +2,10 @@ TERMUX_PKG_HOMEPAGE=https://ffmpeg.org
 TERMUX_PKG_DESCRIPTION="Tools and libraries to manipulate a wide range of multimedia formats and protocols"
 TERMUX_PKG_LICENSE="GPL-3.0"
 # NOTE: mpv has to be rebuilt and version bumped after updating ffmpeg.
-TERMUX_PKG_VERSION=4.2.1
-TERMUX_PKG_REVISION=2
+TERMUX_PKG_VERSION=4.3.1
 TERMUX_PKG_SRCURL=https://www.ffmpeg.org/releases/ffmpeg-${TERMUX_PKG_VERSION}.tar.xz
-TERMUX_PKG_SHA256=cec7c87e9b60d174509e263ac4011b522385fd0775292e1670ecc1180c9bb6d4
-TERMUX_PKG_DEPENDS="libass, libbz2, libdav1d, libiconv, libsoxr, libx264, libx265, xvidcore, libvorbis, libmp3lame, libopus, libvpx, libgnutls, libandroid-glob, freetype, zlib, liblzma"
+TERMUX_PKG_SHA256=ad009240d46e307b4e03a213a0f49c11b650e445b1f8be0dda2a9212b34d2ffb
+TERMUX_PKG_DEPENDS="libass, libbz2, libdav1d, libiconv, libsoxr, libx264, libx265, xvidcore, libvorbis, libmp3lame, libopus, libvpx, libgnutls, libandroid-glob, freetype, zlib, liblzma, libvidstab, libwebp"
 TERMUX_PKG_CONFLICTS="libav"
 TERMUX_PKG_BREAKS="ffmpeg-dev"
 TERMUX_PKG_REPLACES="ffmpeg-dev"
@@ -60,6 +59,8 @@ termux_step_configure() {
 		--enable-libvpx \
 		--enable-shared \
 		--enable-libsoxr \
+		--enable-libvidstab \
+		--enable-libwebp \
 		--prefix=$TERMUX_PREFIX \
 		--target-os=android \
 		--extra-libs="-landroid-glob" \

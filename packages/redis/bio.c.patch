@@ -1,24 +1,14 @@
---- ../../build/redis/cache/redis-3.2.8/src/bio.c	2017-02-12 16:14:57.000000000 +0100
-+++ ./src/bio.c	2017-03-02 22:46:52.999274254 +0100
-@@ -151,8 +151,8 @@
- 
-     /* Make the thread killable at any time, so that bioKillThreads()
-      * can work reliably. */
--    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
--    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-+    //pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-+    //pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
- 
-     pthread_mutex_lock(&bio_mutex[type]);
-     /* Block SIGALRM so we are sure that only the main thread will
-@@ -213,15 +213,19 @@
-     int err, j;
+diff -uNr redis-6.0.9/src/bio.c redis-6.0.9.mod/src/bio.c
+--- redis-6.0.9/src/bio.c	2020-10-27 07:12:01.000000000 +0000
++++ redis-6.0.9.mod/src/bio.c	2020-11-22 17:02:03.692060558 +0000
+@@ -266,15 +266,7 @@
  
      for (j = 0; j < BIO_NUM_OPS; j++) {
--        if (pthread_cancel(bio_threads[j]) == 0) {
+         if (bio_threads[j] == pthread_self()) continue;
+-        if (bio_threads[j] && pthread_cancel(bio_threads[j]) == 0) {
 -            if ((err = pthread_join(bio_threads[j],NULL)) != 0) {
 -                serverLog(LL_WARNING,
--                    "Bio thread for job type #%d can be joined: %s",
+-                    "Bio thread for job type #%d can not be joined: %s",
 -                        j, strerror(err));
 -            } else {
 -                serverLog(LL_WARNING,
@@ -26,18 +16,6 @@
 -            }
 -        }
 +        pthread_kill(bio_threads[j], 0);
-+        serverLog(LL_WARNING,
-+            "Bio thread for job type #%d terminated",j);
-+
-+        //if (pthread_cancel(bio_threads[j]) == 0) {
-+        //    if ((err = pthread_join(bio_threads[j],NULL)) != 0) {
-+        //        serverLog(LL_WARNING,
-+        //            "Bio thread for job type #%d can be joined: %s",
-+        //                j, strerror(err));
-+        //    } else {
-+        //        serverLog(LL_WARNING,
-+        //            "Bio thread for job type #%d terminated",j);
-+        //    }
-+        //}
++        serverLog(LL_WARNING, "Bio thread for job type #%d terminated",j);
      }
  }

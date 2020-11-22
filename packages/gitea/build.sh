@@ -1,15 +1,14 @@
 TERMUX_PKG_HOMEPAGE=https://gitea.io
 TERMUX_PKG_DESCRIPTION="Git with a cup of tea, painless self-hosted git service"
 TERMUX_PKG_LICENSE="MIT"
-TERMUX_PKG_MAINTAINER="Leonid Plyushch <leonid.plyushch@gmail.com>"
-TERMUX_PKG_VERSION=1.9.5
+TERMUX_PKG_MAINTAINER="Leonid Pliushch <leonid.pliushch@gmail.com>"
+TERMUX_PKG_VERSION=1.12.6
 TERMUX_PKG_SRCURL=https://github.com/go-gitea/gitea/archive/v$TERMUX_PKG_VERSION.tar.gz
-TERMUX_PKG_SHA256=0436e54a41af7777249509d0206cac5396b8b841c2ad8b118ab7cebb612e9933
+TERMUX_PKG_SHA256=86a1bc9a92432c5d8e04df4fb32e250ef03a2de14d0b685cbe3f817fb76a5406
 TERMUX_PKG_DEPENDS="dash, git"
+TERMUX_PKG_CONFFILES="etc/gitea/app.ini"
 
 termux_step_make() {
-	echo 'replace github.com/go-macaron/cors v0.0.0-20190309005821-6fd6a9bfe14e9 => github.com/go-macaron/cors 6fd6a9bfe14e' >> $TERMUX_PKG_SRCDIR/go.mod
-
 	termux_setup_golang
 	export GOPATH=$TERMUX_PKG_BUILDDIR
 
@@ -17,13 +16,11 @@ termux_step_make() {
 	cp -a "$TERMUX_PKG_SRCDIR" "$GOPATH"/src/code.gitea.io/gitea
 	cd "$GOPATH"/src/code.gitea.io/gitea
 
-	# go-bindata shoudn't be cross-compiled
-	GOOS=linux GOARCH=amd64 go get -u github.com/jteeuwen/go-bindata/...
-	export PATH="$PATH:$GOPATH/bin"
-
-	CGO_ENABLED=0 CGO_LDFLAGS="" CGO_CFLAGS="" GOOS=linux GOARCH=amd64 make generate
-	#CGO_ENABLED=0 CGO_LDFLAGS="" CGO_CFLAGS="" LDFLAGS="" TAGS="bindata sqlite" make all
-	LDFLAGS="" TAGS="bindata sqlite" make all
+	LDFLAGS=""
+	LDFLAGS+=" -X code.gitea.io/gitea/modules/setting.CustomConf=$TERMUX_PREFIX/etc/gitea/app.ini"
+	LDFLAGS+=" -X code.gitea.io/gitea/modules/setting.AppWorkPath=$TERMUX_PREFIX/var/lib/gitea"
+	LDFLAGS+=" -X code.gitea.io/gitea/modules/setting.CustomPath=$TERMUX_PREFIX/var/lib/gitea"
+	GITEA_VERSION=v"$TERMUX_PKG_VERSION" TAGS="bindata sqlite" make all
 }
 
 termux_step_make_install() {
@@ -34,13 +31,9 @@ termux_step_make_install() {
 	mkdir -p "$TERMUX_PREFIX"/etc/gitea
 	sed "s%\@TERMUX_PREFIX\@%${TERMUX_PREFIX}%g" \
 		"$TERMUX_PKG_BUILDER_DIR"/app.ini > "$TERMUX_PREFIX"/etc/gitea/app.ini
-
-	sed "s%\@TERMUX_PREFIX\@%${TERMUX_PREFIX}%g" \
-		"$TERMUX_PKG_BUILDER_DIR"/gitea-service.sh > "$TERMUX_PREFIX"/bin/gitea-service.sh
-	chmod 700 ${TERMUX_PREFIX}/bin/gitea-service.sh
 }
 
 termux_step_post_massage() {
-	mkdir -p "$TERMUX_PKG_MASSAGEDIR/$TERMUX_PREFIX"/var/gitea
+	mkdir -p "$TERMUX_PKG_MASSAGEDIR/$TERMUX_PREFIX"/var/lib/gitea
 	mkdir -p "$TERMUX_PKG_MASSAGEDIR/$TERMUX_PREFIX"/var/log/gitea
 }

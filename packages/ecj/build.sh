@@ -1,30 +1,34 @@
 TERMUX_PKG_HOMEPAGE=http://www.eclipse.org/jdt/core/
 TERMUX_PKG_DESCRIPTION="Eclipse Compiler for Java"
 TERMUX_PKG_LICENSE="EPL-2.0"
-TERMUX_PKG_VERSION=4.12
-local _date=201906051800
-TERMUX_PKG_REVISION=2
-TERMUX_PKG_SRCURL=http://archive.eclipse.org/eclipse/downloads/drops${TERMUX_PKG_VERSION:0:1}/R-$TERMUX_PKG_VERSION-$_date/ecj-$TERMUX_PKG_VERSION.jar
+# Version 4.12 is the last known to work on Android 7-8.
+_VERSION=4.12
+_DATE=201906051800
+TERMUX_PKG_VERSION=1:${_VERSION}
+TERMUX_PKG_REVISION=3
+TERMUX_PKG_SRCURL=http://archive.eclipse.org/eclipse/downloads/drops${_VERSION:0:1}/R-${_VERSION}-${_DATE}/ecj-${_VERSION}.jar
 TERMUX_PKG_SHA256=69dad18a1fcacd342a7d44c5abf74f50e7529975553a24c64bce0b29b86af497
 TERMUX_PKG_PLATFORM_INDEPENDENT=true
 TERMUX_PKG_CONFLICTS="ecj4.6"
 
-termux_step_extract_package() {
+RAW_JAR=$TERMUX_PKG_CACHEDIR/ecj-${_VERSION}.jar
+
+termux_step_pre_configure() {
 	# Certain packages are not safe to build on device because their
 	# build.sh script deletes specific files in $TERMUX_PREFIX.
 	if $TERMUX_ON_DEVICE_BUILD; then
 		termux_error_exit "Package '$TERMUX_PKG_NAME' is not safe for on-device builds."
 	fi
-
-	mkdir $TERMUX_PKG_SRCDIR
 }
 
-termux_step_make() {
-	local RAW_JAR=$TERMUX_PKG_CACHEDIR/ecj-${TERMUX_PKG_VERSION}.jar
+termux_step_get_source() {
+	mkdir -p $TERMUX_PKG_SRCDIR
 	termux_download $TERMUX_PKG_SRCURL \
 		$RAW_JAR \
 		$TERMUX_PKG_SHA256
+}
 
+termux_step_make() {
 	mkdir -p $TERMUX_PREFIX/share/{dex,java}
 	$TERMUX_D8 \
 		--classpath $ANDROID_HOME/platforms/android-$TERMUX_PKG_API_LEVEL/android.jar \
@@ -78,4 +82,12 @@ termux_step_make() {
 	perl -p -i -e "s%\@TERMUX_PREFIX\@%${TERMUX_PREFIX}%g" $TERMUX_PREFIX/bin/ecj
 	install $TERMUX_PKG_BUILDER_DIR/ecj-$TERMUX_PKG_API_LEVEL $TERMUX_PREFIX/bin/ecj-$TERMUX_PKG_API_LEVEL
 	perl -p -i -e "s%\@TERMUX_PREFIX\@%${TERMUX_PREFIX}%g" $TERMUX_PREFIX/bin/ecj-$TERMUX_PKG_API_LEVEL
+}
+
+termux_step_create_debscripts() {
+	cat <<- EOF > ./postinst
+	#!${TERMUX_PREFIX}/bin/bash
+	rm -f $TERMUX_PREFIX/share/dex/oat/*/ecj.{art,oat,odex,vdex} >/dev/null 2>&1
+	exit 0
+	EOF
 }

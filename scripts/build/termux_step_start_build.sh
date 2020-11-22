@@ -1,4 +1,9 @@
 termux_step_start_build() {
+	TERMUX_STANDALONE_TOOLCHAIN="$TERMUX_COMMON_CACHEDIR/android-r${TERMUX_NDK_VERSION}-api-${TERMUX_PKG_API_LEVEL}"
+	# Bump the below version if a change is made in toolchain setup to ensure
+	# that everyone gets an updated toolchain:
+	TERMUX_STANDALONE_TOOLCHAIN+="-v3"
+
 	# shellcheck source=/dev/null
 	source "$TERMUX_PKG_BUILDER_SCRIPT"
 
@@ -7,11 +12,6 @@ termux_step_start_build() {
 		TERMUX_PKG_SKIP_SRC_EXTRACT=true
 		TERMUX_PKG_PLATFORM_INDEPENDENT=true
 	fi
-
-	TERMUX_STANDALONE_TOOLCHAIN="$TERMUX_COMMON_CACHEDIR/android-r${TERMUX_NDK_VERSION}-api-${TERMUX_PKG_API_LEVEL}"
-	# Bump the below version if a change is made in toolchain setup to ensure
-	# that everyone gets an updated toolchain:
-	TERMUX_STANDALONE_TOOLCHAIN+="-v2"
 
 	if [ -n "${TERMUX_PKG_BLACKLISTED_ARCHES:=""}" ] && [ "$TERMUX_PKG_BLACKLISTED_ARCHES" != "${TERMUX_PKG_BLACKLISTED_ARCHES/$TERMUX_ARCH/}" ]; then
 		echo "Skipping building $TERMUX_PKG_NAME for arch $TERMUX_ARCH"
@@ -128,15 +128,21 @@ termux_step_start_build() {
                         -e "s|@TERMUX_ARCH@|$TERMUX_ARCH|g" > $TERMUX_PREFIX/bin/llvm-config
                         chmod 755 $TERMUX_PREFIX/bin/llvm-config
 	fi
-	# Following directories may contain files with read-only permissions which
-	# makes them undeletable. We need to fix that.
-	[ -d "$TERMUX_PKG_BUILDDIR" ] && chmod +w -R "$TERMUX_PKG_BUILDDIR"
-	[ -d "$TERMUX_PKG_SRCDIR" ] && chmod +w -R "$TERMUX_PKG_SRCDIR"
+	if [ "$TERMUX_PKG_QUICK_REBUILD" = "false" ]; then
+		# Following directories may contain files with read-only permissions which
+		# makes them undeletable. We need to fix that.
+		[ -d "$TERMUX_PKG_BUILDDIR" ] && chmod +w -R "$TERMUX_PKG_BUILDDIR"
+		[ -d "$TERMUX_PKG_SRCDIR" ] && chmod +w -R "$TERMUX_PKG_SRCDIR"
 
-	# Cleanup old state:
-	rm -Rf "$TERMUX_PKG_BUILDDIR" \
-		"$TERMUX_PKG_PACKAGEDIR" \
-		"$TERMUX_PKG_SRCDIR" \
+		# Cleanup old build state:
+		rm -Rf "$TERMUX_PKG_BUILDDIR" \
+			"$TERMUX_PKG_SRCDIR"
+	else
+		TERMUX_PKG_SKIP_SRC_EXTRACT=true
+	fi
+
+	# Cleanup old packaging state:
+	rm -Rf "$TERMUX_PKG_PACKAGEDIR" \
 		"$TERMUX_PKG_TMPDIR" \
 		"$TERMUX_PKG_MASSAGEDIR"
 

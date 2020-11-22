@@ -4,19 +4,20 @@ TERMUX_PKG_LICENSE="GPL-2.0"
 # Use eSpeak NG as the original eSpeak project is dead.
 # See https://github.com/espeak-ng/espeak-ng/issues/180
 # about cross compilation of espeak-ng.
-TERMUX_PKG_VERSION=1.49.2
-TERMUX_PKG_REVISION=3
-TERMUX_PKG_SRCURL=https://github.com/espeak-ng/espeak-ng/releases/download/${TERMUX_PKG_VERSION}/espeak-ng-${TERMUX_PKG_VERSION}.tar.gz
-TERMUX_PKG_SHA256=cf7ed86850b99bafe819548c73a6651a74300980dd15f319ff22e2bd72ea20b4
+TERMUX_PKG_VERSION=1.50
+TERMUX_PKG_REVISION=1
+TERMUX_PKG_SRCURL=https://github.com/espeak-ng/espeak-ng/releases/download/$TERMUX_PKG_VERSION/espeak-ng-$TERMUX_PKG_VERSION.tgz
+TERMUX_PKG_SHA256=80ee6cd06fcd61888951ab49362b400e80dd1fac352a8b1131d90cfe8a210edb
+TERMUX_PKG_DEPENDS="pcaudiolib"
 TERMUX_PKG_BREAKS="espeak-dev"
 TERMUX_PKG_REPLACES="espeak-dev"
 TERMUX_PKG_BUILD_IN_SRC=true
 TERMUX_PKG_HOSTBUILD=true
 TERMUX_PKG_RM_AFTER_INSTALL="lib/*ng-test*"
 # --without-async due to that using pthread_cancel().
-TERMUX_PKG_EXTRA_CONFIGURE_ARGS="--without-async"
+TERMUX_PKG_EXTRA_CONFIGURE_ARGS="--without-async --with-pcaudiolib"
 
-termux_step_post_extract_package() {
+termux_step_post_get_source() {
 	# Certain packages are not safe to build on device because their
 	# build.sh script deletes specific files in $TERMUX_PREFIX.
 	if $TERMUX_ON_DEVICE_BUILD; then

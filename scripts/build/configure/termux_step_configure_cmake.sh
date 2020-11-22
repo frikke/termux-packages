@@ -1,7 +1,7 @@
 termux_step_configure_cmake() {
 	termux_setup_cmake
 
-	local BUILD_TYPE=MinSizeRel
+	local BUILD_TYPE=Release
 	[ "$TERMUX_DEBUG" = "true" ] && BUILD_TYPE=Debug
 
 	local CMAKE_PROC=$TERMUX_ARCH
@@ -13,9 +13,6 @@ termux_step_configure_cmake() {
 	else
 		MAKE_PROGRAM_PATH=$(command -v make)
 	fi
-
-	CXXFLAGS+=" -fno-addrsig"
-	CFLAGS+=" -fno-addrsig"
 
 	local CMAKE_ADDITIONAL_ARGS=()
 	if [ "$TERMUX_ON_DEVICE_BUILD" = "false" ]; then

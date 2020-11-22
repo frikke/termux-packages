@@ -1,13 +1,10 @@
 TERMUX_PKG_HOMEPAGE=https://restic.net/
 TERMUX_PKG_DESCRIPTION="Fast, secure, efficient backup program"
 TERMUX_PKG_LICENSE="BSD"
-TERMUX_PKG_MAINTAINER="Leonid Plyushch <leonid.plyushch@gmail.com>"
-TERMUX_PKG_VERSION=0.9.5
-TERMUX_PKG_REVISION=1
-# Use a snapshot to fix building with go 1.13:
-#TERMUX_PKG_SRCURL=https://github.com/restic/restic/archive/v$TERMUX_PKG_VERSION.tar.gz
-TERMUX_PKG_SRCURL=https://github.com/restic/restic/archive/604b18aa7426148a55f76307ca729e829ff6b61d.zip
-TERMUX_PKG_SHA256=e1d8c977c541d9503a6aba643cf10896f0de488a20db96f162a3e91a4e9def70
+TERMUX_PKG_VERSION=0.11.0
+TERMUX_PKG_REVISION=2
+TERMUX_PKG_SRCURL=https://github.com/restic/restic/archive/v$TERMUX_PKG_VERSION.tar.gz
+TERMUX_PKG_SHA256=73cf434ec93e2e20aa3d593dc5eacb221a71d5ae0943ca59bdffedeaf238a9c6
 TERMUX_PKG_SUGGESTS="openssh, rclone"
 
 termux_step_make() {

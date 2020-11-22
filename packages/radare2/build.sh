@@ -1,9 +1,9 @@
 TERMUX_PKG_HOMEPAGE=https://rada.re
 TERMUX_PKG_DESCRIPTION="Advanced Hexadecimal Editor"
 TERMUX_PKG_LICENSE="GPL-3.0"
-TERMUX_PKG_VERSION=4.0.0
-TERMUX_PKG_SHA256=7621e38558917dc4b469acf2aa33d7cab6414420a0a1d205c55b9c96423e9cee
+TERMUX_PKG_VERSION=4.5.1
 TERMUX_PKG_SRCURL=https://github.com/radare/radare2/archive/$TERMUX_PKG_VERSION.tar.gz
+TERMUX_PKG_SHA256=4e85b35987bd2ca5881ad9585970b970fe7374814bd383bd1cd62e961a0c228b
 TERMUX_PKG_DEPENDS="libuv"
 TERMUX_PKG_BREAKS="radare2-dev"
 TERMUX_PKG_REPLACES="radare2-dev"
@@ -18,7 +18,7 @@ termux_step_pre_configure() {
 	fi
 
 	# Unset CPPFLAGS to avoid -I$TERMUX_PREFIX/include. This is because
-	# radare2 build will put it's own -I flags after ours, which causes
+	# radare2 build will put its own -I flags after ours, which causes
 	# problems due to name clashes (binutils header files).
 	unset CPPFLAGS
 

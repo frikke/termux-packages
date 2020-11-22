@@ -1,23 +1,24 @@
 TERMUX_PKG_HOMEPAGE=https://gstreamer.freedesktop.org/
 TERMUX_PKG_DESCRIPTION="GStreamer Good Plug-ins"
 TERMUX_PKG_LICENSE="LGPL-2.0"
-TERMUX_PKG_VERSION=1.16.1
-TERMUX_PKG_REVISION=2
+TERMUX_PKG_VERSION=1.18.1
+TERMUX_PKG_REVISION=1
 TERMUX_PKG_SRCURL=https://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-${TERMUX_PKG_VERSION}.tar.xz
-TERMUX_PKG_SHA256=9fbabe69018fcec707df0b71150168776040cde6c1a26bb5a82a136755fa8f1f
-TERMUX_PKG_DEPENDS="gst-plugins-base, libcaca, libsoup, libjpeg-turbo, libpng, libflac, libbz2, libvpx, pulseaudio, libmp3lame, gstreamer, libogg, zlib"
-TERMUX_PKG_BUILD_IN_SRC=true
+TERMUX_PKG_SHA256=e210e91a5590ecb6accc9d06c949a58ca6897d8edb3b3d55828e424c624f626c
+TERMUX_PKG_DEPENDS="gst-plugins-base, libandroid-shmem, libcaca, libsoup, libjpeg-turbo, libpng, libflac, libbz2, libvpx, pulseaudio, libmp3lame, gstreamer, libogg, zlib"
 # pcre needed by glib. libxml2 needed by libsoup
 TERMUX_PKG_BUILD_DEPENDS="glib, pcre, libxml2"
 TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
---disable-android_media
---disable-cairo
---disable-examples
---disable-gdk_pixbuf
---disable-oss
---disable-oss4
---disable-tests
---disable-gst_v4l2
---disable-aalib
+-Dcairo=disabled
+-Dexamples=disabled
+-Dgdk-pixbuf=disabled
+-Doss=disabled
+-Doss4=disabled
+-Dtests=disabled
+-Dv4l2=disabled
+-Daalib=disabled
 "
-TERMUX_PKG_RM_AFTER_INSTALL="share/gtk-doc/"
+
+termux_step_pre_configure() {
+	LDFLAGS+=" -landroid-shmem"
+}

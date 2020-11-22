@@ -1,4 +1,4 @@
-#!/data/data/com.termux/files/usr/bin/bash
+#!/bin/bash
 
 # Tier 1: requirements for the core build scripts in scripts/build/.
 PACKAGES="binutils-gold"	# Part of binutils which is dependency of clang.
@@ -12,6 +12,7 @@ PACKAGES+=" unzip"			# Used to extract *.zip source archives.
 
 # Tier 2: requirements for building many other packages.
 PACKAGES+=" asciidoc"
+PACKAGES+=" asciidoctor"
 PACKAGES+=" autoconf"
 PACKAGES+=" automake"
 PACKAGES+=" bc"
